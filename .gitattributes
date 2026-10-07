@@ -1,0 +1,14 @@
+# Normalisasi akhir baris agar konsisten lintas sistem operasi.
+# Berkas teks disimpan dengan LF di repositori, apa pun sistem yang dipakai.
+* text=auto eol=lf
+
+# Berkas Windows tetap memakai CRLF agar dapat dijalankan langsung.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Berkas biner tidak boleh diubah akhir barisnya.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.zip binary
+*.ico binary

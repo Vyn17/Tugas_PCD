@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratorium PCD — Pengolahan Citra Digital</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header class="lab-header">
+  <div class="lab-header__kiri">
+    <span class="lab-header__tanda">PCD</span>
+    <div>
+      <h1 class="lab-header__judul">Laboratorium Pengolahan Citra Digital</h1>
+      <p class="lab-header__sub">Tujuh kelompok operasi &middot; lima belas fungsi &middot; satu sumber rumus</p>
+    </div>
+  </div>
+  <div class="lab-header__status" id="status-badge" data-status="siap">
+    <span class="titik"></span><span id="status-teks">siap</span>
+  </div>
+</header>
+
+<!-- ============================ PANEL KONTROL ============================ -->
+<aside class="kontrol" id="kontrol">
+  <div class="kontrol__kepala">
+    <h2>Kontrol</h2>
+    <button type="button" class="tombol tombol--hantu" id="tombol-lipat"
+            aria-expanded="true" aria-controls="kontrol-isi">lipat</button>
+  </div>
+
+  <div class="kontrol__isi" id="kontrol-isi">
+
+    <!-- Sumber citra -->
+    <section class="kontrol__blok">
+      <h3>Sumber Citra</h3>
+
+      <div class="tab" role="tablist">
+        <button type="button" class="tab__tombol tab__tombol--aktif" data-tab="dataset" role="tab"
+                aria-selected="true">Dataset</button>
+        <button type="button" class="tab__tombol" data-tab="unggah" role="tab"
+                aria-selected="false">Unggah</button>
+      </div>
+
+      <div class="tab__isi" data-isi="dataset">
+        <label class="medan">
+          <span class="medan__label">Citra 1 — kategori</span>
+          <select id="kat1">
+            {% for nama, daftar in daftar_dataset.items() %}
+            <option value="{{ nama }}">{{ nama }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="medan">
+          <span class="medan__label">Citra 1 — berkas</span>
+          <select id="idx1"></select>
+        </label>
+        <p class="medan__petunjuk" id="info1"></p>
+
+        <label class="medan">
+          <span class="medan__label">Citra 2 — kategori</span>
+          <select id="kat2">
+            {% for nama, daftar in daftar_dataset.items() %}
+            <option value="{{ nama }}" {% if nama == 'dog' %}selected{% endif %}>{{ nama }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="medan">
+          <span class="medan__label">Citra 2 — berkas</span>
+          <select id="idx2"></select>
+        </label>
+        <p class="medan__petunjuk" id="info2"></p>
+      </div>
+
+      <div class="tab__isi tab__isi--sembunyi" data-isi="unggah">
+        <label class="medan">
+          <span class="medan__label">Unggah citra 1</span>
+          <input type="file" id="berkas1" accept="image/png,image/jpeg">
+        </label>
+        <label class="medan">
+          <span class="medan__label">Unggah citra 2 (opsional)</span>
+          <input type="file" id="berkas2" accept="image/png,image/jpeg">
+        </label>
+        <p class="medan__petunjuk">PNG atau JPG, maksimum 12 MB per berkas.</p>
+      </div>
+    </section>
+
+    <!-- Kelompok -->
+    <section class="kontrol__blok">
+      <h3>Kelompok Dirender</h3>
+      <p class="medan__petunjuk">Hilangkan centang untuk mempercepat pemuatan.</p>
+      <div class="centang-daftar" id="kelompok-daftar">
+        {% for k in kelompok %}
+        <label class="centang">
+          <input type="checkbox" class="kelompok-centang" value="{{ k.id }}" checked>
+          <span>{{ k.label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Grayscale -->
+    <section class="kontrol__blok">
+      <h3>2. Grayscale</h3>
+      <div class="centang-daftar">
+        {% for m in metode_grayscale %}
+        <label class="centang">
+          <input type="checkbox" class="metode-gray" value="{{ m }}" checked>
+          <span>{{ m }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Brightening -->
+    <section class="kontrol__blok">
+      <h3>3. Brightening</h3>
+      <label class="medan slider">
+        <span class="medan__label">beta — kecerahan <b id="v-beta">50</b></span>
+        <input type="range" id="beta" min="-150" max="150" step="5" value="50">
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">alpha — kontras <b id="v-alpha">1.00</b></span>
+        <input type="range" id="alpha" min="0" max="3" step="0.05" value="1">
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">gamma <b id="v-gamma">1.50</b></span>
+        <input type="range" id="gamma" min="0.2" max="4" step="0.1" value="1.5">
+      </label>
+    </section>
+
+    <!-- Aritmetika -->
+    <section class="kontrol__blok">
+      <h3>4. Aritmetika</h3>
+      <p class="medan__petunjuk">Bobot blending hanya berlaku pada blok &ldquo;Blending Berbobot&rdquo;.</p>
+      <label class="medan slider">
+        <span class="medan__label">w1 <b id="v-weight1">0.50</b></span>
+        <input type="range" id="weight1" min="0" max="1" step="0.05" value="0.5">
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">w2 <b id="v-weight2">0.50</b></span>
+        <input type="range" id="weight2" min="0" max="1" step="0.05" value="0.5">
+      </label>
+    </section>
+
+    <!-- Geometri -->
+    <section class="kontrol__blok">
+      <h3>5. Geometri</h3>
+      <label class="medan slider">
+        <span class="medan__label">tx <b id="v-tx">50</b></span>
+        <input type="range" id="tx" min="-400" max="400" step="5" value="50">
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">ty <b id="v-ty">30</b></span>
+        <input type="range" id="ty" min="-400" max="400" step="5" value="30">
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">sudut <b id="v-sudut">45</b>&deg;</span>
+        <input type="range" id="sudut" min="-180" max="180" step="5" value="45">
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">skala rotasi <b id="v-skala">1.00</b></span>
+        <input type="range" id="skala" min="0.2" max="2" step="0.05" value="1">
+      </label>
+      <label class="medan">
+        <span class="medan__label">mode flipping</span>
+        <select id="mode_flip">
+          {% for m in mode_flip %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">faktor zoom <b id="v-zoom">1.50</b></span>
+        <input type="range" id="faktor_zoom" min="0.2" max="3" step="0.1" value="1.5">
+      </label>
+      <label class="centang">
+        <input type="checkbox" id="jaga_ukuran" checked>
+        <span>jaga ukuran kanvas saat zoom</span>
+      </label>
+    </section>
+
+    <!-- Thresholding -->
+    <section class="kontrol__blok">
+      <h3>7. Thresholding</h3>
+      <label class="medan slider">
+        <span class="medan__label">T manual <b id="v-threshold">127</b></span>
+        <input type="range" id="threshold" min="0" max="255" step="1" value="127">
+      </label>
+      <label class="medan">
+        <span class="medan__label">mode manual</span>
+        <select id="mode_threshold">
+          {% for m in mode_threshold %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="medan">
+        <span class="medan__label">metode adaptif</span>
+        <select id="metode_adaptif">
+          <option value="mean">mean</option>
+          <option value="gaussian">gaussian</option>
+        </select>
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">block_size <b id="v-block">15</b></span>
+        <input type="range" id="block_size" min="3" max="51" step="1" value="15">
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">C <b id="v-c">3</b></span>
+        <input type="range" id="c" min="-10" max="20" step="1" value="3">
+      </label>
+      <label class="medan slider">
+        <span class="medan__label">max_val <b id="v-maxval">255</b></span>
+        <input type="range" id="max_val" min="1" max="255" step="1" value="255">
+      </label>
+    </section>
+
+    <div class="kontrol__aksi">
+      <button type="button" class="tombol tombol--utama" id="tombol-proses">Proses Ulang Semua</button>
+      <button type="button" class="tombol tombol--hantu" id="tombol-reset">Nilai Default</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ============================== HASIL ============================== -->
+<main class="hasil" id="hasil">
+
+  <!-- Catatan teknis -->
+  <div class="catatan" id="catatan" hidden>
+    <div class="catatan__kepala">
+      <h2>Catatan Teknis — Koreksi yang Dilakukan Program</h2>
+      <button type="button" class="tombol tombol--hantu" id="catatan-lipat">sembunyikan</button>
+    </div>
+    <ul class="catatan__daftar" id="catatan-daftar"></ul>
+  </div>
+
+  <!-- Galat -->
+  <div class="galat" id="galat" hidden>
+    <strong>Tidak dapat diproses.</strong>
+    <span id="galat-teks"></span>
+  </div>
+
+  <!-- Ringkasan atas -->
+  <div class="ringkas" id="ringkas" hidden>
+    <div class="ringkas__butir">
+      <span class="ringkas__kunci">Citra 1</span>
+      <span class="ringkas__nilai" id="r-nama1">—</span>
+    </div>
+    <div class="ringkas__butir">
+      <span class="ringkas__kunci">Ukuran diproses</span>
+      <span class="ringkas__nilai" id="r-ukuran1">—</span>
+    </div>
+    <div class="ringkas__butir">
+      <span class="ringkas__kunci">Citra 2</span>
+      <span class="ringkas__nilai" id="r-nama2">—</span>
+    </div>
+    <div class="ringkas__butir">
+      <span class="ringkas__kunci">Ukuran diproses</span>
+      <span class="ringkas__nilai" id="r-ukuran2">—</span>
+    </div>
+    <div class="ringkas__butir">
+      <span class="ringkas__kunci">Waktu render</span>
+      <span class="ringkas__nilai" id="r-waktu">—</span>
+    </div>
+  </div>
+
+  <div id="kelompok-wadah"></div>
+
+  <footer class="kaki">
+    <span id="kaki-teks">Menunggu permintaan pertama.</span>
+  </footer>
+</main>
+
+<script>
+  window.PCD = {
+    kelompok: {{ kelompok | tojson }},
+    daftarDataset: {{ daftar_dataset | tojson }}
+  };
+</script>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
